@@ -62,7 +62,9 @@ export class IniCompletionItemProvider implements vscode.CompletionItemProvider 
         // 1. section 头：`[` 后未闭合
         const openBracket = before.lastIndexOf('[');
         if (openBracket >= 0 && !before.slice(openBracket).includes(']')) {
-            return this.sectionCompletion(openBracket, position);
+            // 编辑器会自动闭合 `]`（如 `[P]`），替换时一并吞掉，避免残留成 `[Preset]]`
+            const endCh = rawLine[position.character] === ']' ? position.character + 1 : position.character;
+            return this.sectionCompletion(openBracket, endCh, position);
         }
 
         // 2. 值上下文：`=` 之后
@@ -95,13 +97,15 @@ export class IniCompletionItemProvider implements vscode.CompletionItemProvider 
         return this.keyCompletion(doc, position.line);
     }
 
-    private sectionCompletion(openBracket: number, position: vscode.Position): vscode.CompletionItem[] {
+    private sectionCompletion(openBracket: number, endCh: number, position: vscode.Position): vscode.CompletionItem[] {
         return SECTION_TEMPLATES.map((t) => {
-            const item = new vscode.CompletionItem(`[${t.label}]`, vscode.CompletionItemKind.Snippet);
+            const item = new vscode.CompletionItem(`[${t.label}]`, vscode.CompletionItemKind.Class);
             item.detail = t.detail;
-            item.documentation = new vscode.MarkdownString(t.body.join('\n'));
-            item.insertText = new vscode.SnippetString(t.body.join('\n'));
-            item.range = new vscode.Range(position.line, openBracket + 1, position.line, position.character);
+            item.documentation = t.detail;
+            // 仅补全节名 `[节名]`，光标停在 `]` 前，便于继续输入自定义名（如 `[PoolXXXX]`）；
+            // 范围覆盖已输入的 `[` 与编辑器自动闭合的 `]`
+            item.insertText = new vscode.SnippetString(`[${t.label}$0]`);
+            item.range = new vscode.Range(position.line, openBracket, position.line, endCh);
             return item;
         });
     }
