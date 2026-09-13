@@ -3,8 +3,12 @@
   "displayName": "XXMI INI Language Support",
   "description": "Syntax highlighting, IntelliSense and validation for the 3DMigoto / XXMI extended INI language",
   "version": "0.1.0",
-  "publisher": "ini-xxmi",
+  "publisher": "xqfa",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/XQFAAAA/ini-xxmi.git"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },

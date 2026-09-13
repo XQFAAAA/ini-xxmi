@@ -1,6 +1,6 @@
 # XXMI INI Language Support
 
-为 **3DMigoto / XXMI** 扩展 INI 语言提供语法高亮、智能感知、校验与格式化的 VS Code 扩展。适用于编写 XXMI（Genshin / SR / HI3 等）模组的 `*.ini` 配置文件与 3DMigoto 的 `d3dx.ini`。
+为 **3DMigoto / XXMI** 扩展 INI 语言提供语法高亮、智能感知、校验与格式化的 VS Code 扩展。适用于编写 XXMI 模组的 `*.ini` 配置文件与 3DMigoto 的 `d3dx.ini`。
 
 ## 功能
 

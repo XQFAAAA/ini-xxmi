@@ -26,6 +26,21 @@ function isRunnableSection(s: IniSection): boolean {
     return s.kind === SectionKind.CommandList || s.regexSub !== undefined;
 }
 
+/** 当前文件的 Pool / Resource 节（节名 + 说明），供键位置与值位置引用补全 */
+function poolResourceSections(doc: IniDocument): Array<{ name: string; detail: string }> {
+    const out: Array<{ name: string; detail: string }> = [];
+    for (const s of doc.sections) {
+        if (s.kind !== SectionKind.Resource) {
+            continue;
+        }
+        out.push({
+            name: s.name,
+            detail: /^pool/i.test(s.name) ? `[${s.name}] 索引池` : `[${s.name}] 资源`,
+        });
+    }
+    return out;
+}
+
 /**
  * 智能补全：
  * - section 模板（输入 `[` 后）
@@ -51,8 +66,10 @@ export class IniCompletionItemProvider implements vscode.CompletionItemProvider 
         }
 
         // 2. 值上下文：`=` 之后
+        //    键可含 `[`（池元素赋值 `PoolFoo[0] = ref ...`、数组变量），仅排除以 `[` 开头的非法行（与解析器 key 判定一致）
         const eqIdx = before.lastIndexOf('=');
-        if (eqIdx >= 0 && !before.slice(0, eqIdx).includes('[')) {
+        const keyPart = eqIdx >= 0 ? before.slice(0, eqIdx) : '';
+        if (eqIdx >= 0 && !/^\s*\[/.test(keyPart)) {
             const key = rawLine.slice(0, eqIdx).trim();
             const valPrefix = before.slice(eqIdx + 1).replace(/^\s+/, '');
             const curSection = doc.sections.find((s) => position.line >= s.start && position.line < s.end);
@@ -109,6 +126,12 @@ export class IniCompletionItemProvider implements vscode.CompletionItemProvider 
             item.detail = '变量赋值';
             items.push(item);
         }
+        // 当前文件的 Pool / Resource 节名（键位置直接引用，如 PoolFoo[0] = ... / vs-t0 = ref ResourceFoo）
+        for (const pr of poolResourceSections(doc)) {
+            const item = new vscode.CompletionItem(pr.name, vscode.CompletionItemKind.Reference);
+            item.detail = pr.detail;
+            items.push(item);
+        }
         return items;
     }
 
@@ -127,11 +150,20 @@ export class IniCompletionItemProvider implements vscode.CompletionItemProvider 
                     items.push(item);
                 }
             } else if (argIndex === 1) {
+                // 资源目标参数：只替换当前参数（逗号之后的部分），保留前面的 $out
+                const argText = prefix.slice(prefix.lastIndexOf(',') + 1);
+                const argPrefix = argText.replace(/^\s+/, '');
+                const argRange = new vscode.Range(
+                    position.line,
+                    position.character - argText.length + (argText.length - argPrefix.length),
+                    position.line,
+                    position.character,
+                );
                 for (const s of doc.sections) {
                     if (s.kind === SectionKind.Resource) {
                         const item = new vscode.CompletionItem(s.name, vscode.CompletionItemKind.Reference);
                         item.detail = '资源目标';
-                        item.range = range;
+                        item.range = argRange;
                         items.push(item);
                     }
                 }
@@ -199,20 +231,29 @@ export class IniCompletionItemProvider implements vscode.CompletionItemProvider 
             return items;
         }
 
-        // ref / copy 资源
-        if (/(?:ref|copy)\s+$/.test(prefix)) {
+        // ref / copy 资源（支持输入部分名称，如 `ref ` / `ref PoolFo` / `copy Reso`；
+        // 补全范围只替换名称部分，保留 ref / copy 关键字与空格）
+        const refMatch = /^\s*(ref|copy)\s+([\w-]*)$/i.exec(prefix);
+        if (refMatch) {
+            const nameOffset = refMatch[0].length - refMatch[2].length;
+            const refRange = new vscode.Range(
+                position.line,
+                position.character - prefix.length + nameOffset,
+                position.line,
+                position.character,
+            );
             for (const s of doc.sections) {
                 if (s.kind === SectionKind.Resource) {
                     const item = new vscode.CompletionItem(s.name, vscode.CompletionItemKind.Reference);
                     item.detail = `[${s.name}] 资源`;
-                    item.range = range;
+                    item.range = refRange;
                     items.push(item);
                 }
             }
             for (const name of this.index?.getExternalResources(uri) ?? []) {
                 const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Reference);
                 item.detail = `[${name}] 资源（其它文件）`;
-                item.range = range;
+                item.range = refRange;
                 items.push(item);
             }
             return items;
@@ -265,6 +306,13 @@ export class IniCompletionItemProvider implements vscode.CompletionItemProvider 
         }
         for (const v of collectVariables(doc)) {
             const item = new vscode.CompletionItem(v, vscode.CompletionItemKind.Variable);
+            item.range = range;
+            items.push(item);
+        }
+        // 值中可直接引用 Pool / Resource（如 vs-t0 = PoolFoo[0]，无需 ref/copy 前缀）
+        for (const pr of poolResourceSections(doc)) {
+            const item = new vscode.CompletionItem(pr.name, vscode.CompletionItemKind.Reference);
+            item.detail = pr.detail;
             item.range = range;
             items.push(item);
         }
