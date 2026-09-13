@@ -1,7 +1,7 @@
 import { parseCached } from './parser';
 import { analyzeExpression } from './expression';
 import { FUNCTION_NAMES } from '../data/functions';
-import { REPEATABLE_COMMANDS } from '../data/commands';
+import { isRepeatableCommand } from '../data/commands';
 import { IniDocument, IniFlow, IniLine, IniSection, KeyKind, Rng, SectionKind } from './types';
 
 export type Severity = 'error' | 'warning' | 'info';
@@ -318,7 +318,7 @@ export function analyze(text: string, options: AnalyzeOptions = {}): IniDiagnost
             if (!isInclude
                 && !(isKeySection && /^(key|back)$/i.test(l.key))
                 && !/^checktextureoverride$/i.test(l.key)
-                && !REPEATABLE_COMMANDS.has(l.key.toLowerCase())
+                && !isRepeatableCommand(l.key)
                 && topLevelKeys.has(l.key)
                 && (keyCount.get(l.key) ?? 0) > 1) {
                 diags.push({

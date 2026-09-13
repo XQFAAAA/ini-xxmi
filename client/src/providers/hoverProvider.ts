@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { parseCached } from '../parser/parser';
-import { IniDocument, IniSection } from '../parser/types';
+import { IniDocument, IniSection, KeyKind } from '../parser/types';
 import { KEY_DOCS } from '../data/keys';
 import { sectionDocs } from '../data/sections';
-import { COMMAND_DOCS } from '../data/commands';
+import { commandDoc } from '../data/commands';
 import { FUNCTION_DOCS, RUNTIME_PARAMS } from '../data/functions';
 import { DXGI_FORMATS } from '../data/formats';
 
@@ -13,7 +13,15 @@ const KEYWORD_DOCS: Record<string, string> = {
     local: '**local** — 局部变量作用域\n\n仅在当前命令列表内有效（离开命令列表即失效）。',
     locked: '**locked** — 锁定变量\n\n声明后不可再赋值；再次赋值会被解析器忽略并告警。',
     persist: '**persist** — 持久化变量\n\n标记的全局变量会被自动保存到 `d3dx_user.ini`，在 INI 重载 / 下次启动时恢复。仅 `global` 作用域可用。',
-    namespace: '**namespace** — 命名空间声明\n\n须位于文件开头、所有 section 之前。声明后可用 `$\\命名空间\\变量`、`节\\命名空间\\键`、`run = CommandList\\命名空间\\名称` 跨文件引用。',
+    namespace: '**namespace** — 声明文件命名空间\n\n须位于文件开头、所有 section 之前；用于跨文件引用：`$\\命名空间\\变量`、`节\\命名空间\\键`、`run = CommandList\\命名空间\\名称`。',
+};
+
+/** 流控制关键字文档（悬停） */
+const FLOW_DOCS: Record<string, string> = {
+    if: '**if** — 条件分支\n\n表达式为真时执行以下命令，可配 `elif` / `else` / `endif`。',
+    elif: '**elif** — 否则如果\n\n前一个 `if` / `elif` 为假且本表达式为真时执行。',
+    else: '**else** — 否则\n\n所有前置条件为假时执行。',
+    endif: '**endif** — 结束条件分支。',
 };
 
 /** KEY_DOCS 的大小写不敏感副本（INI key 匹配不区分大小写） */
@@ -91,10 +99,21 @@ function poolResourceRefName(tok: string): string | undefined {
     return m ? m[1] : undefined;
 }
 
+/** 变量名归一化：去 `$` 前缀与命名空间前缀（`$\Ns\var` → `var`），保留变量大小写 */
+function normalizeVarName(name: string): string {
+    let n = name.trim();
+    if (n.startsWith('$')) {
+        n = n.slice(1);
+    }
+    const i = n.lastIndexOf('\\');
+    return i >= 0 ? n.slice(i + 1) : n;
+}
+
 function variableHover(doc: IniDocument, name: string): vscode.MarkdownString | undefined {
+    const want = normalizeVarName(name);
     for (const s of doc.sections) {
         for (const l of s.lines) {
-            if (l.type === 'variable-decl' && l.name === name) {
+            if (l.type === 'variable-decl' && normalizeVarName(l.name) === want) {
                 const md = new vscode.MarkdownString();
                 md.appendCodeblock(`[${s.name}] ${l.line + 1}`, 'ini');
                 md.appendMarkdown(`**${l.scope}**${l.locked ? ' **locked**' : ''}${l.persist ? ' **persist**' : ''} 变量 \`${l.name}\``);
@@ -160,6 +179,15 @@ export class IniHoverProvider implements vscode.HoverProvider {
             }
         }
 
+        // 2.2 流控制关键字：if / elif / else / endif
+        const flowDoc = FLOW_DOCS[kw];
+        if (flowDoc) {
+            const curLine = section?.lines.find((l) => l.line === position.line);
+            if (curLine?.type === 'flow') {
+                return new vscode.Hover(new vscode.MarkdownString(flowDoc));
+            }
+        }
+
         // 2.5 池 / 资源 / 命令列表引用（PoolX[*] / $PoolX[0] / #PoolX[..] / @PoolX / ResourceX / CommandListX）→ 其定义节
         const refName = poolResourceRefName(refTokenAt(rawLine, position.character)) ?? poolResourceRefName(word);
         if (refName) {
@@ -176,9 +204,10 @@ export class IniHoverProvider implements vscode.HoverProvider {
                 return new vscode.Hover(vh);
             }
             // 命名空间变量 / 赋值目标（$\Namespace\... = v 形式）
+            const want = normalizeVarName(word);
             for (const s of doc.sections) {
                 for (const l of s.lines) {
-                    if (l.type === 'key-value' && l.key.trim() === word) {
+                    if (l.type === 'key-value' && normalizeVarName(l.key) === want) {
                         const md = new vscode.MarkdownString();
                         md.appendMarkdown(`**${word}**\n\n当前值：\`${l.value}\``);
                         return new vscode.Hover(md);
@@ -194,14 +223,21 @@ export class IniHoverProvider implements vscode.HoverProvider {
                     continue;
                 }
                 if (posIn(l.keyRange, position)) {
+                    // 槽位绑定（vs-t0 / ps-cb3 / o0 / vb0 ...）
+                    if (l.keyKind === KeyKind.Slot) {
+                        const md = new vscode.MarkdownString();
+                        md.appendMarkdown(`**${l.key}** — 槽位绑定\n\n`);
+                        md.appendMarkdown('将资源绑定到该管线槽位（t=纹理 u=UAV o=渲染目标 c=常量缓冲 s=采样器；vb/ib 为顶点/索引缓冲）');
+                        return new vscode.Hover(md);
+                    }
                     const docText = KEY_DOCS_LOWER[l.key.toLowerCase()];
                     if (docText) {
                         const md = new vscode.MarkdownString();
                         md.appendMarkdown(`**${l.key}**\n\n${docText}`);
                         return new vscode.Hover(md);
                     }
-                    // 命令（drawindexed / dispatch / CheckTextureOverride 等）
-                    const cmdText = COMMAND_DOCS[l.key.toLowerCase()];
+                    // 命令（drawindexed / dispatch / commandlistN / CheckTextureOverride 等）
+                    const cmdText = commandDoc(l.key);
                     if (cmdText) {
                         const md = new vscode.MarkdownString();
                         md.appendMarkdown(`**${l.key}** — 命令\n\n${cmdText}`);
@@ -211,8 +247,7 @@ export class IniHoverProvider implements vscode.HoverProvider {
                 if (/^store$/i.test(l.key) && posIn(l.valueRange, position)) {
                     const md = new vscode.MarkdownString();
                     md.appendMarkdown('**store** — GPU→CPU 回读\n\n');
-                    md.appendMarkdown('`store = $out, ResourceFoo, $offset`\n\n');
-                    md.appendMarkdown('- `$out`：接收值的 INI 变量\n- 资源目标：管线槽位或自定义资源\n- 偏移表达式：读取的 32 位值序号（回读开销大，按需使用）');
+                    md.appendMarkdown('`store = $out, ResourceFoo, $offset`：从资源回读 32 位浮点值到变量（回读代价高，按需使用）');
                     return new vscode.Hover(md);
                 }
                 // 值内 run / ref·copy 目标
@@ -234,6 +269,13 @@ export class IniHoverProvider implements vscode.HoverProvider {
                         const md = new vscode.MarkdownString();
                         const bytes = DXGI_BYTES[fmt.replace(/^DXGI_FORMAT_/i, '')];
                         md.appendMarkdown(`**${fmt}** — DXGI 格式${bytes ? `（每元素 ${bytes} 字节）` : ''}`);
+                        return new vscode.Hover(md);
+                    }
+                    // 命令值说明（clear / draw* / dispatch 等）
+                    const cmdVal = commandDoc(l.key);
+                    if (cmdVal) {
+                        const md = new vscode.MarkdownString();
+                        md.appendMarkdown(`**${l.key}** — 命令\n\n${cmdVal}`);
                         return new vscode.Hover(md);
                     }
                 }
