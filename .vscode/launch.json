@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Extension (ini-xxmi)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/client/dist/**/*.js"],
+      "preLaunchTask": "npm: compile",
+      "sourceMaps": true
+    }
+  ]
+}

@@ -1,0 +1,173 @@
+{
+  "name": "ini-xxmi",
+  "displayName": "XXMI INI Language Support",
+  "description": "Syntax highlighting, IntelliSense and validation for the 3DMigoto / XXMI extended INI language",
+  "version": "0.1.0",
+  "publisher": "ini-xxmi",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Formatters",
+    "Linters"
+  ],
+  "keywords": [
+    "3dmigoto",
+    "xxmi",
+    "genshin",
+    "ini",
+    "shader",
+    "modding"
+  ],
+  "activationEvents": [
+    "onLanguage:ini-xxmi",
+    "onCommand:ini-xxmi.applyColors"
+  ],
+  "main": "./client/dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ini-xxmi.applyColors",
+        "title": "XXMI INI: 应用颜色设置到用户配置"
+      }
+    ],
+    "configurationDefaults": {
+      "editor.tokenColorCustomizations": {
+        "textMateRules": [
+          { "scope": "support.type.property-name.ini-xxmi", "settings": { "foreground": "#e06c75" } },
+          { "scope": "variable.other.ini-param.ini-xxmi", "settings": { "foreground": "#e06c75" } },
+          { "scope": "constant.other.runtime-parameter.ini-xxmi", "settings": { "foreground": "#3FB950" } }
+        ]
+      }
+    },
+    "languages": [
+      {
+        "id": "ini-xxmi",
+        "aliases": [
+          "XXMI INI",
+          "3DMigoto INI"
+        ],
+        "extensions": [
+          ".ini"
+        ],
+        "filenames": [
+          "d3dx.ini",
+          "d3dx_user.ini"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ini-xxmi",
+        "scopeName": "source.ini-xxmi",
+        "path": "./syntaxes/xxmi-ini.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "ini-xxmi",
+        "path": "./snippets/xxmi-ini.json"
+      }
+    ],
+    "configuration": {
+      "title": "XXMI INI",
+      "properties": {
+        "iniXxmi.color.iniParam": {
+          "type": "string",
+          "format": "color-hex",
+          "default": "#e06c75",
+          "description": "IniParams 寄存器键（x/y/z/w 及 x1…w180，ini 传递到着色器 IniParams[].xyzw 的变量）颜色。修改后运行「应用颜色设置」命令生效。"
+        },
+        "iniXxmi.color.key": {
+          "type": "string",
+          "format": "color-hex",
+          "default": "#e06c75",
+          "description": "节的键（hash、pool_size、type、data 等）颜色。修改后运行「应用颜色设置」命令生效。"
+        },
+        "iniXxmi.color.parameter": {
+          "type": "string",
+          "format": "color-hex",
+          "default": "#3FB950",
+          "description": "内置变量（FRAME_NUMBER、cursor_y、res_width 等）颜色。修改后运行「应用颜色设置」命令生效。"
+        },
+        "iniXxmi.diagnostics.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable diagnostics (validation) for XXMI INI files."
+        },
+        "iniXxmi.diagnostics.maxProblems": {
+          "type": "number",
+          "default": 500,
+          "description": "Maximum number of diagnostics reported per file."
+        },
+        "iniXxmi.diagnostics.checkUnknownReferences": {
+          "type": "boolean",
+          "default": true,
+          "description": "Warn when run / ref / copy references a command list or resource not defined in this file."
+        },
+        "iniXxmi.diagnostics.checkUndeclaredVariables": {
+          "type": "boolean",
+          "default": true,
+          "description": "Warn when a variable is used without a declaration in this file."
+        },
+        "iniXxmi.diagnostics.checkRegexSyntax": {
+          "type": "boolean",
+          "default": true,
+          "description": "Basic PCRE2 syntax validation for ShaderRegex .Pattern content (balanced groups, character classes, unknown escapes)."
+        },
+        "iniXxmi.diagnostics.checkExpressionSyntax": {
+          "type": "boolean",
+          "default": true,
+          "description": "Validate expressions in values / conditions: balanced parens, strings, operator operands, unknown function calls."
+        },
+        "iniXxmi.diagnostics.checkFileExists": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check that [Resource*] filename values point to existing files."
+        },
+        "iniXxmi.format.indentFlowControl": {
+          "type": "boolean",
+          "default": true,
+          "description": "Indent command list bodies inside if/else/endif blocks when formatting."
+        },
+        "iniXxmi.format.alignEquals": {
+          "type": "boolean",
+          "default": false,
+          "description": "Align the '=' of top-level key-value pairs within each section when formatting."
+        },
+        "iniXxmi.format.trimTrailingWhitespace": {
+          "type": "boolean",
+          "default": true,
+          "description": "Remove trailing whitespace when formatting."
+        },
+        "iniXxmi.format.indentSize": {
+          "type": "number",
+          "default": 4,
+          "description": "Number of spaces per indentation level."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "vscode-tmgrammar-snap -g ./syntaxes/xxmi-ini.tmLanguage.json \"tests/fixtures/**/*.ini\"",
+    "test:update": "vscode-tmgrammar-snap -u -g ./syntaxes/xxmi-ini.tmLanguage.json \"tests/fixtures/**/*.ini\"",
+    "test:parser": "npm run compile && node scripts/verify-parser.js",
+    "test:diagnostics": "npm run compile && node scripts/verify-diagnostics.js",
+    "test:format": "npm run compile && node scripts/verify-format.js",
+    "package": "vsce package",
+    "lint": "tsc -p ./ --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.24.0",
+    "typescript": "^5.4.0",
+    "vscode-tmgrammar-test": "^0.1.2"
+  }
+}

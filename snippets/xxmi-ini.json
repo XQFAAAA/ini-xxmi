@@ -1,0 +1,172 @@
+{
+  "TextureOverride Section": {
+    "prefix": "textureoverride",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "[TextureOverride${1:1}]",
+      "Hash = $2",
+      "$0"
+    ],
+    "description": "Create a [TextureOverride] section"
+  },
+  "ShaderOverride Section": {
+    "prefix": "shaderoverride",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "[ShaderOverride${1:1}]",
+      "Hash = $2",
+      "run = ${3:CommandList}",
+      "$0"
+    ],
+    "description": "Create a [ShaderOverride] section"
+  },
+  "CustomShader Section": {
+    "prefix": "customshader",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "[CustomShader${1:1}]",
+      "run = ${2:CommandList}",
+      "$0"
+    ],
+    "description": "Create a [CustomShader] section"
+  },
+  "Resource Section": {
+    "prefix": "resource",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "[Resource${1:1}]",
+      "type = ${2:Buffer}",
+      "filename = $3",
+      "$0"
+    ],
+    "description": "Create a [Resource] section"
+  },
+  "Pool Section (Ring)": {
+    "prefix": "poolring",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "[Pool${1:1}]",
+      "pool_size = ${2:4}",
+      "pool_index_type = ring",
+      "type = ${3:Buffer}",
+      "$0"
+    ],
+    "description": "Create a ring-indexed [Pool] section (XXMI)"
+  },
+  "Pool Section (FIFO)": {
+    "prefix": "poolfifo",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "[Pool${1:1}]",
+      "pool_size = ${2:4}",
+      "pool_index_type = fifo",
+      "type = ${3:Buffer}",
+      "$0"
+    ],
+    "description": "Create a FIFO-indexed [Pool] section (XXMI)"
+  },
+  "CommandList Section": {
+    "prefix": "commandlist",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "[CommandList${1:1}]",
+      "$0"
+    ],
+    "description": "Create a [CommandList] section"
+  },
+  "Key Section": {
+    "prefix": "key",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "[Key${1:1}]",
+      "Key = ${2:no_modifiers VK_F10}",
+      "$0"
+    ],
+    "description": "Create a [Key] binding section"
+  },
+  "Preset Section": {
+    "prefix": "preset",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "[Preset${1:1}]",
+      "$0"
+    ],
+    "description": "Create a [Preset] section"
+  },
+  "ShaderRegex Section": {
+    "prefix": "shaderregex",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "[ShaderRegex${1:1}]",
+      "shader_model = ${2:ps_5_0}",
+      "",
+      "[ShaderRegex${1}.Pattern]",
+      "$3",
+      "",
+      "[ShaderRegex${1}.Pattern.Replace]",
+      "$4",
+      "",
+      "[ShaderRegex${1}.InsertDeclarations]",
+      "$5"
+    ],
+    "description": "Create a complete [ShaderRegex] section set"
+  },
+  "if / else / endif": {
+    "prefix": "ifelse",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "if ${1:\\$var == 0}",
+      "\t$2",
+      "else",
+      "\t$3",
+      "endif"
+    ],
+    "description": "Insert an if / else / endif block"
+  },
+  "if / endif": {
+    "prefix": "if",
+    "scope": "source.ini-xxmi",
+    "body": [
+      "if ${1:condition}",
+      "\t$2",
+      "endif"
+    ],
+    "description": "Insert an if / endif block"
+  },
+  "run Command List": {
+    "prefix": "run",
+    "scope": "source.ini-xxmi",
+    "body": "run = ${1:CommandList}",
+    "description": "Run a command list"
+  },
+  "store (GPU readback)": {
+    "prefix": "store",
+    "scope": "source.ini-xxmi",
+    "body": "store = \\$out, ${2:ResourceFoo}, \\$offset",
+    "description": "XXMI store command: read a float from a GPU resource into a variable"
+  },
+  "ref / copy Assignment": {
+    "prefix": "refcopy",
+    "scope": "source.ini-xxmi",
+    "body": "${1:vs-t0} = ${2|ref,copy|} ${3:ResourceFoo}",
+    "description": "Resource reference / copy assignment"
+  },
+  "Global Variable": {
+    "prefix": "global",
+    "scope": "source.ini-xxmi",
+    "body": "global \\$var = ${1:0}",
+    "description": "Declare a global variable"
+  },
+  "Locked Global Variable": {
+    "prefix": "globallocked",
+    "scope": "source.ini-xxmi",
+    "body": "global locked \\$var = ${1:0}",
+    "description": "Declare a locked (read-only) global variable (XXMI)"
+  },
+  "Persistent Global Variable": {
+    "prefix": "globalpersist",
+    "scope": "source.ini-xxmi",
+    "body": "global persist \\$var = ${1:0}",
+    "description": "Declare a persistent global variable"
+  }
+}

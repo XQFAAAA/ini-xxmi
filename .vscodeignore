@@ -1,0 +1,9 @@
+node_modules/
+client/src/
+.vscode/
+.vscode-test/
+tests/
+scripts/
+.github/
+*.vsix
+*.log

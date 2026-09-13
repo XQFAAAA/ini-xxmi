@@ -1,0 +1,6 @@
+node_modules/
+client/dist/
+*.vsix
+.vscode-test/
+tests/fixtures/**/*.snap
+tests/snapshots/

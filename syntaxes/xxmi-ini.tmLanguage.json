@@ -1,0 +1,449 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "XXMI INI",
+  "scopeName": "source.ini-xxmi",
+  "fileTypes": ["ini"],
+  "comment": "3DMigoto / XXMI extended INI language. See docs/ini-language-extensions in XXMI-Libs-Package.",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#regex-subsections" },
+    { "include": "#sections" },
+    { "include": "#flow-control" },
+    { "include": "#variable-declarations" },
+    { "include": "#key-value" },
+    { "include": "#bare-line" }
+  ],
+  "repository": {
+    "comments": {
+      "comment": "Semicolon comments are only valid as the first non-whitespace character of a line (IniHandler.cpp: a mid-line semicolon is literal)",
+      "match": "^\\s*;.*$",
+      "name": "comment.line.semicolon.ini-xxmi"
+    },
+
+    "regex-subsections": {
+      "comment": "[ShaderRegexN.Pattern] / .Pattern.Replace / .InsertDeclarations sub-sections hold raw text lines",
+      "patterns": [
+        {
+          "begin": "^\\s*(\\[)\\s*((?i:ShaderRegex)\\w+\\.(?:Pattern\\.Replace))\\s*(\\])",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.section.begin.ini-xxmi" },
+            "2": { "name": "entity.name.section.regex-replace.ini-xxmi" },
+            "3": { "name": "punctuation.definition.section.end.ini-xxmi" }
+          },
+          "end": "(?=^\\s*\\[\\s*[^\\]]*\\s*\\]\\s*$)",
+          "patterns": [
+            { "include": "#comments" },
+            { "match": ".+$", "name": "string.regexp.replacement.ini-xxmi" }
+          ]
+        },
+        {
+          "begin": "^\\s*(\\[)\\s*((?i:ShaderRegex)\\w+\\.(?:Pattern))\\s*(\\])",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.section.begin.ini-xxmi" },
+            "2": { "name": "entity.name.section.regex-pattern.ini-xxmi" },
+            "3": { "name": "punctuation.definition.section.end.ini-xxmi" }
+          },
+          "end": "(?=^\\s*\\[\\s*[^\\]]*\\s*\\]\\s*$)",
+          "patterns": [
+            { "include": "#comments" },
+            { "match": ".+$", "name": "string.regexp.ini-xxmi" }
+          ]
+        },
+        {
+          "begin": "^\\s*(\\[)\\s*((?i:ShaderRegex)\\w+\\.(?:InsertDeclarations))\\s*(\\])",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.section.begin.ini-xxmi" },
+            "2": { "name": "entity.name.section.regex-insert.ini-xxmi" },
+            "3": { "name": "punctuation.definition.section.end.ini-xxmi" }
+          },
+          "end": "(?=^\\s*\\[\\s*[^\\]]*\\s*\\]\\s*$)",
+          "patterns": [
+            { "include": "#comments" },
+            { "match": ".+$", "name": "string.hlsl-declaration.ini-xxmi" }
+          ]
+        }
+      ]
+    },
+
+    "sections": {
+      "comment": "Section header classification matches IniHandler.cpp CommandListSections / RegularSections",
+      "patterns": [
+        {
+          "match": "^\\s*(\\[)\\s*((?i:TextureOverride|ShaderOverride|CustomShader|CommandList|ShaderRegex|BuiltInCommandList|BuiltInCustomShader|Constants|Present|Clear(?:RenderTargetView|DepthStencilView|UnorderedAccessViewUint|UnorderedAccessViewFloat))[^\\]]*)\\s*(\\])\\s*(;.*)?$",
+          "captures": {
+            "1": { "name": "punctuation.definition.section.begin.ini-xxmi" },
+            "2": { "name": "entity.name.section.command-list.ini-xxmi" },
+            "3": { "name": "punctuation.definition.section.end.ini-xxmi" },
+            "4": { "name": "comment.line.semicolon.ini-xxmi" }
+          }
+        },
+        {
+          "match": "^\\s*(\\[)\\s*((?i:Pool|Resource)[^\\]]*)\\s*(\\])\\s*(;.*)?$",
+          "captures": {
+            "1": { "name": "punctuation.definition.section.begin.ini-xxmi" },
+            "2": { "name": "entity.name.section.resource.ini-xxmi" },
+            "3": { "name": "punctuation.definition.section.end.ini-xxmi" },
+            "4": { "name": "comment.line.semicolon.ini-xxmi" }
+          }
+        },
+        {
+          "match": "^\\s*(\\[)\\s*((?i:Loader|Include|Hunting|System|Device|Rendering|Logging)[^\\]]*)\\s*(\\])\\s*(;.*)?$",
+          "captures": {
+            "1": { "name": "punctuation.definition.section.begin.ini-xxmi" },
+            "2": { "name": "entity.name.section.config.ini-xxmi" },
+            "3": { "name": "punctuation.definition.section.end.ini-xxmi" },
+            "4": { "name": "comment.line.semicolon.ini-xxmi" }
+          }
+        },
+        {
+          "match": "^\\s*(\\[)\\s*((?i:Key|Preset)[^\\]]*)\\s*(\\])\\s*(;.*)?$",
+          "captures": {
+            "1": { "name": "punctuation.definition.section.begin.ini-xxmi" },
+            "2": { "name": "entity.name.section.interaction.ini-xxmi" },
+            "3": { "name": "punctuation.definition.section.end.ini-xxmi" },
+            "4": { "name": "comment.line.semicolon.ini-xxmi" }
+          }
+        },
+        {
+          "match": "^\\s*(\\[)\\s*((?i:Profile|Stereo|ConvergenceMap)[^\\]]*)\\s*(\\])\\s*(;.*)?$",
+          "captures": {
+            "1": { "name": "punctuation.definition.section.begin.ini-xxmi" },
+            "2": { "name": "entity.name.section.ini-xxmi" },
+            "3": { "name": "punctuation.definition.section.end.ini-xxmi" },
+            "4": { "name": "comment.line.semicolon.ini-xxmi" }
+          }
+        },
+        {
+          "match": "^\\s*(\\[)\\s*([^\\]]*)\\s*(\\])\\s*(;.*)?$",
+          "captures": {
+            "1": { "name": "punctuation.definition.section.begin.ini-xxmi" },
+            "2": { "name": "entity.name.section.ini-xxmi" },
+            "3": { "name": "punctuation.definition.section.end.ini-xxmi" },
+            "4": { "name": "comment.line.semicolon.ini-xxmi" }
+          }
+        }
+      ]
+    },
+
+    "key-value": {
+      "comment": "Leading whitespace is excluded from the key capture so key-name patterns can be ^-anchored even on indented lines",
+      "match": "^\\s*([^\\[=;][^=;]*?)(\\s*)(=)(.*)$",
+      "captures": {
+        "1": { "patterns": [{ "include": "#key-name" }] },
+        "3": { "name": "keyword.operator.assignment.ini-xxmi" },
+        "4": { "patterns": [{ "include": "#value-content" }] }
+      }
+    },
+
+    "key-name": {
+      "patterns": [
+        {
+          "comment": "global/local [locked] [persist] $var declarations",
+          "match": "(global|local)(\\s+locked)?(\\s+persist)?(\\s+)(\\$[A-Za-z_][A-Za-z0-9_.]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.scope.ini-xxmi" },
+            "2": { "name": "keyword.declaration.ini-xxmi" },
+            "3": { "name": "keyword.declaration.ini-xxmi" },
+            "5": { "name": "variable.other.readwrite.ini-xxmi" }
+          }
+        },
+        {
+          "comment": "pre/post phase qualifier (post x = 0, pre dump = o0)",
+          "match": "(post|pre)(\\s+)([^=]+)",
+          "captures": {
+            "1": { "name": "keyword.control.phase.ini-xxmi" },
+            "3": { "name": "support.type.property-name.ini-xxmi" }
+          }
+        },
+        {
+          "comment": "input-layout override key: vb0->ElementFormat(SEMANTIC, $index)",
+          "match": "((?:vs|ps|hs|ds|gs|cs)-(?:t|u|o|c|s)[a-z]?\\d+|vb\\d+)\\s*->\\s*(Element(?:Format|Offset))\\s*\\(",
+          "captures": {
+            "1": { "name": "support.type.ini-xxmi" },
+            "2": { "name": "support.function.input-layout.ini-xxmi" }
+          }
+        },
+        {
+          "comment": "namespaced variable assignment target: $\\Namespace\\file\\mode",
+          "match": "(\\$(?:\\\\[A-Za-z0-9_.]+)+)",
+          "name": "variable.other.namespaced.ini-xxmi"
+        },
+        {
+          "comment": "variable assignment target: $x = ...",
+          "match": "(\\$[A-Za-z_][A-Za-z0-9_.]*)",
+          "name": "variable.other.readwrite.ini-xxmi"
+        },
+        {
+          "comment": "pipeline slot assignment target: vs-t0 = ..., u0 = ..., bare stage cs = ...",
+          "match": "(?:(?:vs|ps|hs|ds|gs|cs)(?:-(?:t|u|o|c|s)[a-z]?\\d+)?|vb\\d+|ib\\d*|o[0-7Dd]|u\\d+|so\\d+)",
+          "name": "support.type.ini-xxmi"
+        },
+        {
+          "comment": "IniParams 寄存器键（ini 传递到着色器 IniParams[].xyzw）：x/y/z/w + 可选寄存器号（x1/y1/z1/w1 … x180/y180/z180/w180），与 ParseIniParamName 一致、大小写不敏感",
+          "match": "(?i)^[xyzw]\\d*$",
+          "name": "variable.other.ini-param.ini-xxmi"
+        },
+        {
+          "comment": "namespaced resource / command-list key: Resource\\NS\\Name / CommandList\\NS\\Name",
+          "match": "(Resource\\w*|CommandList\\w*)(?:\\\\[A-Za-z0-9_.]+)+",
+          "name": "support.class.ini-xxmi"
+        },
+        {
+          "comment": "command list commands: run / drawindexed / dispatch / CheckTextureOverride / store ...",
+          "match": "(?:CheckTextureOverride|exclude_preset|reset_per_frame_limits|analyse_options|special|store|drawindexedinstancedindirect|drawinstancedindirect|dispatchindirect|drawindexedinstanced|drawinstanced|drawindexed|drawauto|dispatch|draw|preset|run|handling|clear|dump)(?![A-Za-z0-9_])",
+          "name": "keyword.control.ini-xxmi"
+        },
+        {
+          "comment": "pool element assignment target with inner bracket re-scan",
+          "begin": "(Pool\\w+)(\\[)",
+          "beginCaptures": {
+            "1": { "name": "support.class.ini-xxmi" },
+            "2": { "name": "punctuation.definition.bracket.ini-xxmi" }
+          },
+          "end": "(\\])",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.bracket.ini-xxmi" }
+          },
+          "patterns": [
+            { "include": "#variables" },
+            { "include": "#pool-refs" },
+            { "include": "#slots" },
+            { "include": "#keywords" }
+          ]
+        },
+        {
+          "match": "(CommandList\\w+)",
+          "name": "keyword.control.ini-xxmi"
+        },
+        {
+          "match": "(Resource\\w+)",
+          "name": "support.class.ini-xxmi"
+        },
+        {
+          "match": "([A-Za-z_][A-Za-z0-9_.-]*)",
+          "name": "support.type.property-name.ini-xxmi"
+        }
+      ]
+    },
+
+    "flow-control": {
+      "patterns": [
+        {
+          "match": "^\\s*(if|elif|else\\s+if)\\b(.*)$",
+          "captures": {
+            "1": { "name": "keyword.control.if.ini-xxmi" },
+            "2": { "patterns": [{ "include": "#value-content" }] }
+          }
+        },
+        {
+          "match": "^\\s*(else|endif)\\b",
+          "captures": {
+            "1": { "name": "keyword.control.ini-xxmi" }
+          }
+        }
+      ]
+    },
+
+    "variable-declarations": {
+      "comment": "Declaration without initializer: global $var (value defaults to 0)",
+      "match": "^\\s*(global|local)(\\s+locked)?(\\s+persist)?(\\s+)(\\$[A-Za-z_][A-Za-z0-9_.]*)(\\s*)(;.*)?$",
+      "captures": {
+        "1": { "name": "keyword.declaration.scope.ini-xxmi" },
+        "2": { "name": "keyword.declaration.ini-xxmi" },
+        "3": { "name": "keyword.declaration.ini-xxmi" },
+        "5": { "name": "variable.other.readwrite.ini-xxmi" },
+        "7": { "name": "comment.line.semicolon.ini-xxmi" }
+      }
+    },
+
+    "bare-line": {
+      "comment": "Any other line without an equals sign (allowed in [ShaderRegex]/[Profile] and command lists)",
+      "match": "^\\s*[^\\[\\s;=].*$",
+      "name": "meta.line.bare.ini-xxmi"
+    },
+
+    "value-content": {
+      "patterns": [
+        { "include": "#strings" },
+        { "include": "#comments" },
+        { "include": "#namespace-variables" },
+        { "include": "#metadata-vars" },
+        { "include": "#variables" },
+        { "include": "#hashes" },
+        { "include": "#numbers" },
+        { "include": "#resource-members" },
+        { "include": "#runtime-params" },
+        { "include": "#functions" },
+        { "include": "#keywords" },
+        { "include": "#operators" },
+        { "include": "#slots" },
+        { "include": "#enum-values" },
+        { "include": "#key-bindings" },
+        { "include": "#dxgi-formats" },
+        { "include": "#pool-refs" },
+        { "include": "#resource-refs" },
+        { "include": "#command-list-refs" }
+      ]
+    },
+
+    "strings": {
+      "match": "\"(?:[^\"\\\\]|\\\\.)*\"",
+      "name": "string.quoted.double.ini-xxmi"
+    },
+
+    "namespace-variables": {
+      "comment": "Namespaced variable: $\\Namespace\\file\\mode",
+      "match": "\\$(?:\\\\[A-Za-z0-9_.]+)+",
+      "name": "variable.other.namespaced.ini-xxmi"
+    },
+
+    "metadata-vars": {
+      "comment": "#var / @var / $var 引用统一按变量高亮（含 [下标]），与 $ver 一致；$Pool / #Pool / @Pool 均为浮点变量色",
+      "match": "(?:[#@][A-Za-z_][A-Za-z0-9_.]*(?:-[A-Za-z0-9]+)*|\\$[A-Za-z_][A-Za-z0-9_.]*)(?:\\[[^\\]]*\\])?",
+      "name": "variable.other.readwrite.ini-xxmi"
+    },
+
+    "variables": {
+      "match": "\\$[A-Za-z_][A-Za-z0-9_.]*",
+      "name": "variable.other.readwrite.ini-xxmi"
+    },
+
+    "hashes": {
+      "comment": "3DMigoto / XXMI shader or texture hashes (8 or 16 hex digits; 0x/0b literals excluded)",
+      "match": "\\b(?!0[xXbB])[0-9a-fA-F]{8,16}\\b",
+      "name": "constant.other.hash.ini-xxmi"
+    },
+
+    "numbers": {
+      "patterns": [
+        { "match": "\\b0[bB][01]+\\b", "name": "constant.numeric.binary.ini-xxmi" },
+        { "match": "\\b0[xX][0-9a-fA-F]+\\b", "name": "constant.numeric.hexadecimal.ini-xxmi" },
+        { "match": "\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b", "name": "constant.numeric.ini-xxmi" }
+      ]
+    },
+
+    "runtime-params": {
+      "comment": "XXMI runtime parameters evaluated at execution time (ParamOverrideTypeNames，大小写不敏感；scissor 支持可选下标 scissor0_left 等)",
+      "match": "(?i)\\b(?:FRAME_NUMBER|DRAW_NUMBER|DISPATCH_NUMBER|FRAME_TIME|FPS|TIME|RT_WIDTH|RT_HEIGHT|RES_WIDTH|RES_HEIGHT|WINDOW_WIDTH|WINDOW_HEIGHT|VERTEX_COUNT|INDEX_COUNT|INSTANCE_COUNT|FIRST_VERTEX|FIRST_INDEX|FIRST_INSTANCE|THREAD_GROUP_COUNT_X|THREAD_GROUP_COUNT_Y|THREAD_GROUP_COUNT_Z|INDIRECT_OFFSET|DRAW_TYPE|CURSOR_SHOWING|CURSOR_SCREEN_X|CURSOR_SCREEN_Y|CURSOR_WINDOW_X|CURSOR_WINDOW_Y|CURSOR_X|CURSOR_Y|CURSOR_HOTSPOT_X|CURSOR_HOTSPOT_Y|SCISSOR\\d*_(?:LEFT|TOP|RIGHT|BOTTOM)|HUNTING|FRAME_ANALYSIS|EFFECTIVE_DPI|SLI|STEREO_ACTIVE|STEREO_AVAILABLE)\\b",
+      "name": "constant.other.runtime-parameter.ini-xxmi"
+    },
+
+    "functions": {
+      "comment": "HLSL-style expression functions (XXMI extension)",
+      "match": "\\b(?:countbits|sin|cos|tan|asin|acos|atan|abs|sign|ceil|floor|trunc|round|frac|sqrt|rsqrt|exp|exp2|log|log2|saturate|random)\\s*(?=\\()",
+      "name": "support.function.ini-xxmi"
+    },
+
+    "resource-members": {
+      "comment": "ResourceCopyTarget / ShaderTarget 成员后缀（SyntaxTarget）：->Size / ->Region(off,size) / ->HashRegion / ->cb_mask / ->srv_stride 等",
+      "match": "(->)((?i:size|index|width|offset|stride|format|height|region|hashregion|lastframe|spatialhash|sourcestride|elementformat|elementoffset|cb_mask|cb_type|cb_size|srv_mask|srv_type|srv_stride|srv_dimension))",
+      "captures": {
+        "1": { "name": "keyword.operator.attribute.ini-xxmi" },
+        "2": { "name": "support.function.ini-xxmi" }
+      }
+    },
+
+    "keywords": {
+      "comment": "ref/copy options (ref/reference/copy_desc/unless_null/set_viewport/no_view_cache/resolve_msaa), clear options (int/depth/stencil), draw special values (from_caller/auto) and control keywords",
+      "match": "\\b(?:global|local|locked|persist|run|if|elif|else|endif|ref|reference|copy|copy_desc|copy_description|unless_null|set_viewport|no_view_cache|resolve_msaa|from_caller|auto|int|depth|stencil|null|true|false|post|pre)\\b",
+      "name": "keyword.control.ini-xxmi"
+    },
+
+    "operators": {
+      "patterns": [
+        { "match": "->", "name": "keyword.operator.attribute.ini-xxmi" },
+        { "match": "<<|>>", "name": "keyword.operator.shift.ini-xxmi" },
+        { "match": "===|!==|==|!=|>=|<=|&&|\\|\\|", "name": "keyword.operator.comparison.ini-xxmi" },
+        { "match": "\\*\\*", "name": "keyword.operator.exponent.ini-xxmi" },
+        { "match": "//", "name": "keyword.operator.floor-division.ini-xxmi" },
+        { "match": "[@#]", "name": "keyword.operator.metadata.ini-xxmi" },
+        { "match": "[+\\-*/%&|^~!]", "name": "keyword.operator.arithmetic.ini-xxmi" },
+        { "match": "[<>]", "name": "keyword.operator.comparison.ini-xxmi" }
+      ]
+    },
+
+    "slots": {
+      "patterns": [
+        {
+          "match": "\\b(?:vs|ps|hs|ds|gs|cs)-(?:t|u|o|c|s)[a-z]?\\d+\\b",
+          "name": "support.type.ini-xxmi"
+        },
+        {
+          "comment": "render targets o0-o7/oD, stream outputs so0-3, UAVs, vertex/index buffers",
+          "match": "\\b(?:vb\\d+|ib\\d*|o[0-7Dd]|u\\d+|so\\d+)\\b",
+          "name": "support.type.ini-xxmi"
+        },
+        {
+          "comment": "copy-source-only targets: bb / r_bb / f_bb back buffers, this, iniparams, cursor_mask/cursor_color (null handled by keywords rule)",
+          "match": "\\b(?:r_bb|f_bb|bb|iniparams|cursor_mask|cursor_color|this)\\b",
+          "name": "support.type.ini-xxmi"
+        },
+        {
+          "comment": "bare shader stage target: vs / ps / gs / hs / ds / cs",
+          "match": "\\b(?:vs|ps|hs|ds|gs|cs)\\b",
+          "name": "support.type.ini-xxmi"
+        }
+      ]
+    },
+
+    "dxgi-formats": {
+      "comment": "DXGI_FORMAT_xxx、xxx 或 XXMI 字面量 dxgi_format_N（完整枚举，含 BC/D/R/X/Y 等全部前缀）；与 enum-values 合并同类作用域，保证高亮颜色一致",
+      "patterns": [
+        { "match": "\\b(?i:dxgi_format_)\\d+\\b", "name": "constant.language.enum-value.ini-xxmi" },
+        { "match": "\\b(?:DXGI_FORMAT_)?(?:[A-Z][A-Z0-9]*|[0-9]+)(?:_[A-Z0-9]+)*\\b", "name": "constant.language.enum-value.ini-xxmi" }
+      ]
+    },
+
+    "enum-values": {
+      "comment": "XXMI GetIniEnumClass / lookup_enum_val 枚举值（查找经 _wcsicmp，大小写不敏感）：资源类型(CustomResourceTypeNames)、池索引(PoolIndexTypeNames)、键位类型(KeyOverrideTypeNames)、日志级别、标记模式、过渡类型、哈希类型、深度缓冲过滤、分辨率来源、颜色空间、marking 动作、bind/misc/cpu-access 标志、D3D 编译标志、copy/ref 选项、资源复制目标与求值模式、handling、blend 混合(BlendOPs/BlendFactors)、比较/模板(ComparisonFuncs/StencilOps)、光栅化(FillModes/CullModes/FrontDirection)、拓扑(PrimitiveTopologies)、帧分析选项(FrameAnalysisOptionNames)",
+      "match": "\\b(?i:(?:Buffer|StructuredBuffer|AppendStructuredBuffer|ConsumeStructuredBuffer|ByteAddressBuffer|Texture1D|Texture2D|Texture3D|TextureCube|RWBuffer|RWStructuredBuffer|RWByteAddressBuffer|RWTexture1D|RWTexture2D|RWTexture3D|activate|hold|toggle|cycle|ring|fifo|static|spatial|sRGB|Linear|disabled|warning|info|debug|skip|mono|original|pink|linear|cosine|3dmigoto|embedded|bytecode|none|depth_active|depth_inactive|swap_chain|depth_stencil|abort|hlsl|asm|assembly|regex|ShaderRegex|clipboard|mono_snapshot|snapshot_if_pink|vertex_buffer|index_buffer|constant_buffer|shader_resource|stream_output|render_target|unordered_access|decoder|video_encoder|read|write|generate_mips|shared|texturecube|drawindirect_args|buffer_allow_raw_views|buffer_structured|resource_clamp|shared_keyedmutex|gdi_compatible|shared_nthandle|restricted_content|restrict_shared_resource|restrict_shared_resource_driver|guarded|tile_pool|tiled|hw_protected|skip_validation|skip_optimization|pack_matrix_row_major|pack_matrix_column_major|partial_precision|force_vs_software_no_opt|force_ps_software_no_opt|no_preshader|avoid_flow_control|prefer_flow_control|enable_strictness|enable_backwards_compatibility|ieee_strictness|optimization_level0|optimization_level1|optimization_level2|optimization_level3|warnings_are_errors|resources_may_alias|enable_unbounded_descriptor_tables|all_resources_bound|copy_desc|copy_description|unless_null|set_viewport|no_view_cache|raw|resolve_msaa|Empty|ConstantBuffer|ShaderResource|VertexBuffer|IndexBuffer|StreamOutput|RenderTarget|DepthStencilTarget|UnorderedAccessView|CustomResource|IniParams|CursorMask|CursorColor|ThisResource|Pool|SwapChain|RealSwapChain|FakeSwapChain|CPU|ResourceIdentity|ResourceStride|ResourceSourceStride|ResourceSize|ResourceOffset|ResourceRegionHash|ResourceSpatialHash|ResourceFormat|ResourceWidth|ResourceHeight|PoolIdentity|PoolSize|PoolIndex|PoolFullRange|PoolLastFrame|Variable|LayoutElementFormat|LayoutElementOffset|add|subtract|rev_subtract|min|max|zero|one|src_color|inv_src_color|src_alpha|inv_src_alpha|dest_alpha|inv_dest_alpha|dest_color|inv_dest_color|src_alpha_sat|blend_factor|inv_blend_factor|src1_color|inv_src1_color|src1_alpha|inv_src1_alpha|never|less|less_equal|equal|not_equal|greater|greater_equal|always|keep|replace|incr_sat|decr_sat|incr|decr|invert|wireframe|solid|front|back|clockwise|counterclockwise|point_list|line_list|line_strip|triangle_list|triangle_strip|line_list_adj|line_strip_adj|triangle_list_adj|triangle_strip_adj|(?:1[0-9]|2[0-9]|3[0-2]|[1-9])_control_point_patch_list|dump_rt|dump_depth|dump_tex|dump_cb|dump_vb|dump_ib|jps|jpg|jpeg|dds|jps_dds|jpg_dds|jpeg_dds|buf|txt|desc|dump_rt_jps|dump_rt_dds|dump_depth_jps|dump_depth_dds|dump_tex_jps|dump_tex_dds|dump_cb_txt|dump_vb_txt|dump_ib_txt|clear_rt|persist|filename_reg|filename_handle|log|dump_on_unmap|dump_on_update|deferred_ctx_immediate|deferred_ctx_accurate|share_dupes|symlink))\\b",
+      "name": "constant.language.enum-value.ini-xxmi"
+    },
+
+    "key-bindings": {
+      "patterns": [
+        {
+          "match": "\\b(?:no_modifiers|no_ctrl|no_alt|no_shift|no_win|ctrl|alt|shift|win)\\b",
+          "name": "keyword.modifier.ini-xxmi"
+        },
+        {
+          "match": "\\bVK_[A-Za-z0-9_]+\\b",
+          "name": "constant.language.enum-value.ini-xxmi"
+        },
+        {
+          "match": "\\bXB[1-4]?_[A-Z0-9_]+\\b",
+          "name": "constant.language.enum-value.ini-xxmi"
+        },
+        {
+          "match": "\\b[A-Z0-9]\\b",
+          "name": "constant.language.enum-value.ini-xxmi"
+        }
+      ]
+    },
+
+    "pool-refs": {
+      "match": "\\bPool\\w+\\b(?:\\[[^\\]]*\\])?",
+      "name": "support.class.ini-xxmi"
+    },
+
+    "resource-refs": {
+      "match": "\\bResource\\w+\\b",
+      "name": "support.class.ini-xxmi"
+    },
+
+    "command-list-refs": {
+      "comment": "run = X 目标节：CommandList / CustomShader / BuiltIn*（支持命名空间 X\\NS\\Name），对应 ParseRunShader / ParseRunExplicitCommandList",
+      "patterns": [
+        {
+          "match": "\\b(?:BuiltInCommandList|BuiltInCustomShader|CommandList|CustomShader)\\w*(?:\\\\[A-Za-z0-9_.]+)+",
+          "name": "keyword.control.ini-xxmi"
+        },
+        {
+          "match": "\\b(?:BuiltInCommandList|BuiltInCustomShader|CommandList|CustomShader)\\w*\\b",
+          "name": "keyword.control.ini-xxmi"
+        }
+      ]
+    }
+  }
+}
+
